@@ -1,0 +1,164 @@
+# =============================================================
+# CONFIGURACIÓN BASE — aplica a todos los perfiles
+# =============================================================
+spring:
+
+  # Perfil activo por defecto al desarrollar localmente
+  # En producción se sobreescribe con variable de entorno:
+  # SPRING_PROFILES_ACTIVE=prod
+  profiles:
+    active: dev
+
+  application:
+    name: Control-de-roles
+
+  # =============================================================
+  # JPA / HIBERNATE
+  # =============================================================
+  jpa:
+    # Hibernate NO debe crear ni modificar tablas — Flyway se encarga de eso
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        # Dialecto MySQL 8
+        dialect: org.hibernate.dialect.MySQLDialect
+        # Muestra SQL en consola solo en dev (se sobreescribe por perfil)
+        show_sql: false
+        format_sql: false
+    # Evita el problema de LazyInitializationException en las respuestas
+    open-in-view: false
+
+  # =============================================================
+  # FLYWAY — migraciones de base de datos
+  # =============================================================
+  flyway:
+    enabled: true
+    # Carpeta donde estarán los scripts SQL de migración
+    locations: classpath:db/migration
+    # Prefijo estándar de Flyway para los scripts: V1__, V2__, etc.
+    sql-migration-prefix: V
+    separator: __
+    # Si la BD ya tiene tablas sin historial Flyway, no falla
+    baseline-on-migrate: true
+    baseline-version: 0
+
+
+
+---
+# =============================================================
+# PERFIL: DEV
+# =============================================================
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/security_roles_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: miguel
+    # NUNCA pongas la contraseña real aquí en un proyecto real
+    # Usa variables de entorno. Para dev local es aceptable temporalmente.
+    password: miguelelmejor
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+    # HikariCP — pool de conexiones
+    hikari:
+      pool-name: HikariPool-Dev
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
+
+  jpa:
+    properties:
+      hibernate:
+        # En dev sí mostramos SQL para depurar
+        show_sql: true
+        format_sql: true
+
+# JWT — configuración del token
+application:
+  security:
+    jwt:
+      # Clave secreta: mínimo 256 bits (32 caracteres) para HS256
+      # En prod esto DEBE venir de variable de entorno o vault
+      secret-key: "dev-secret-key-that-is-long-enough-for-hs256-algorithm-min-32chars"
+      # Tiempo de vida del access token en milisegundos (15 minutos)
+      access-token-expiration: 900000
+      # Tiempo de vida del refresh token en milisegundos (7 días)
+      refresh-token-expiration: 604800000
+
+# Logging en dev — más verboso para depurar
+logging:
+  level:
+    root: INFO
+    com.edu: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql: TRACE
+
+# Actuator — en dev exponemos todo para monitorear
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics, flyway
+  endpoint:
+    health:
+      show-details: always
+
+# Puerto del servidor en dev
+server:
+  port: 8080
+
+---
+# =============================================================
+# PERFIL: PROD
+# =============================================================
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  datasource:
+    # En prod TODO viene de variables de entorno — nunca valores hardcodeados
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+    hikari:
+      pool-name: HikariPool-Prod
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
+
+application:
+  security:
+    jwt:
+      secret-key: ${JWT_SECRET_KEY}
+      access-token-expiration: ${JWT_ACCESS_EXPIRATION:900000}
+      refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
+
+# Logging en prod — solo lo necesario, sin SQL ni debug de security
+logging:
+  level:
+    root: WARN
+    com.tuempresa: INFO
+
+# Actuator — en prod solo exponemos health (para el load balancer)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+server:
+  port: 8080
