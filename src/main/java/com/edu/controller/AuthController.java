@@ -11,10 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
@@ -24,6 +22,8 @@ public class AuthController {
 
     private final AuthService authService;
 
+
+
     // POST /api/v1/auth/register
     @PostMapping("/register")
     public ResponseEntity<AuthResponse.TokenPair> register(
@@ -32,6 +32,8 @@ public class AuthController {
         AuthResponse.TokenPair response = authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
+
 
     // POST /api/v1/auth/login
     @PostMapping("/login")

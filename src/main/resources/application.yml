@@ -89,6 +89,10 @@ application:
       access-token-expiration: 900000
       # Tiempo de vida del refresh token en milisegundos (7 días)
       refresh-token-expiration: 604800000
+  admin:
+    username: victor
+    email: plazacarnicas@gmail.com
+    password: victor2026
 
 # Logging en dev — más verboso para depurar
 logging:
@@ -143,6 +147,10 @@ application:
       secret-key: ${JWT_SECRET_KEY}
       access-token-expiration: ${JWT_ACCESS_EXPIRATION:900000}
       refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
+  admin:
+    username: ${ADMIN_USERNAME}
+    email: ${ADMIN_EMAIL}
+    password: ${ADMIN_PASSWORD}
 
 # Logging en prod — solo lo necesario, sin SQL ni debug de security
 logging:
